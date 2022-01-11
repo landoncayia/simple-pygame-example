@@ -5,6 +5,10 @@ from enum import Enum
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
+# Define constants for drawing images in View
+SQUARE_SIZE = 50
+SQUARE_THICKNESS = 3
+
 # Define Color class to store various useful color values
 # This is a great way to do "enums" in Python
 class Color:
@@ -17,3 +21,6 @@ class Color:
 
 # Define constants for colors used in game View
 BACKGROUND_COLOR = Color.White
+
+# Define constants related to game logic/rules
+BOARD_SIZE = 9

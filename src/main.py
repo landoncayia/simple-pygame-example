@@ -1,5 +1,6 @@
 import pygame
 from pygame.sprite import collide_mask
+from draw_board import draw_board
 import sprites
 import constants
 
@@ -45,7 +46,6 @@ def main():
 
         # Everything must be drawn from scratch each time the game loop runs.
         # So first fill everything with the background color
-        print(constants.Color.White)
         screen.fill(constants.Color.White)
 
         # Reflect the changes to the Model onto the View for the User
@@ -61,6 +61,9 @@ def main():
         )
         screen.blit(surf, surf_center)
         # END TEST
+
+        # Draw the board onto the screen
+        draw_board(screen)
 
         # The flip method updates the entire screen with every change since it was last called
         pygame.display.flip()
