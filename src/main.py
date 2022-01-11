@@ -1,36 +1,70 @@
-import pygame as pg  # Using 'as' enables one to reference pygame as 'pg' rather than 'pygame'
+import pygame
+from pygame.sprite import collide_mask
+import sprites
+import constants
+
+from pygame.locals import (
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_ESCAPE,
+    KEYDOWN,
+    QUIT,
+)
 
 def main():
     """ Set up the game and run the main game loop
     This functions as the Controller component of MVC """
-    pg.init()                   # Initialize the pygame module
-    width, height = 640, 480    # The width and height of the game window
+    pygame.init()   # Initialize the pygame module
 
-    # Create a surface, which represents the View component of MVC of (width, height), and its window.
-    main_surface = pg.display.set_mode((width, height))
+    # Create a surface, which represents the View component of MVC of (width, height)
+    # This surface will function as the "root" display
+    screen = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
 
-    # Set up some data to describe a small rectangle and its color.
-    small_rect = (300, 200, 150, 90)
-    some_color = (255, 0, 0)        # R G B
+    # Load piece sprites, which will be drawn onto the surface
+
+    # As long as running is True, the game will continue
+    running = True
 
     # Main game loop
-    while True:
-        ev = pg.event.poll()        # Look for any event
-        if ev.type == pg.QUIT:      # Window close button clicked?
-            break                   # Leave game loop and end game
+    while running:
+        # Look through new events generated this iteration
+        for event in pygame.event.get():
+            # Check if the user hit a key
+            if event.type == KEYDOWN:
+                # If the key pressed was Escape, stop the game loop
+                if event.key == K_ESCAPE:
+                    running = False
+            
+            # If the user clicked the window close button, stop the game loop
+            elif event.type == QUIT:
+                running = False
 
-        # Update game objects and data structures here
+        # Update game objects and data structures (i.e., Model of MVC) here
 
-        # We draw everything from scratch on each frame.
+        # Everything must be drawn from scratch each time the game loop runs.
         # So first fill everything with the background color
-        main_surface.fill((0, 200, 255))
+        print(constants.Color.White)
+        screen.fill(constants.Color.White)
 
-        # Overpaint a smaller rectangle on the main surface
-        main_surface.fill(some_color, small_rect)
+        # Reflect the changes to the Model onto the View for the User
 
-        # Now the surface is ready, tell pygame to display it!
-        pg.display.flip()
+        # TODO: remove code from here to END TEST when done
+        surf = pygame.Surface((50, 50))
+        surf.fill(constants.Color.Black)
+        rect = surf.get_rect()
 
-    pg.quit()   # If the game loop is exited, quit the game and close the window.
+        surf_center = (
+            (constants.SCREEN_WIDTH-surf.get_width())/2,
+            (constants.SCREEN_HEIGHT-surf.get_height())/2
+        )
+        screen.blit(surf, surf_center)
+        # END TEST
 
-main()          # Actually run the game.
+        # The flip method updates the entire screen with every change since it was last called
+        pygame.display.flip()
+
+    pygame.quit()   # If the game loop is exited, quit the game and close the window.
+
+main()  # Actually run the game.
