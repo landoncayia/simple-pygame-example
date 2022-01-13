@@ -50,18 +50,6 @@ def main():
 
         # Reflect the changes to the Model onto the View for the User
 
-        # TODO: remove code from here to END TEST when done
-        surf = pygame.Surface((50, 50))
-        surf.fill(constants.Color.Black)
-        rect = surf.get_rect()
-
-        surf_center = (
-            (constants.SCREEN_WIDTH-surf.get_width())/2,
-            (constants.SCREEN_HEIGHT-surf.get_height())/2
-        )
-        screen.blit(surf, surf_center)
-        # END TEST
-
         # Draw the board onto the screen
         draw_board(screen)
 
@@ -70,4 +58,5 @@ def main():
 
     pygame.quit()   # If the game loop is exited, quit the game and close the window.
 
-main()  # Actually run the game.
+if __name__ == '__main__':
+    main()  # Actually run the game.
