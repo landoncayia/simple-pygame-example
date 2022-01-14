@@ -15,11 +15,25 @@ from pygame.locals import (
     QUIT,
 )
 
-class Piece:
+pygame.init()   # Initialize the pygame module
+
+# Create a surface, which represents the VIEW component of MVC of (width, height)
+# This surface will function as the "root" display
+screen = pygame.display.set_mode((const.SCREEN_WIDTH, const.SCREEN_HEIGHT))
+
+# Create and resize surfaces for pieces
+red_surf = pygame.image.load('src/images/red_piece.png')
+blue_surf = pygame.image.load('src/images/blue_piece.png')
+red_surf = pygame.transform.scale(red_surf, (40, 40))
+blue_surf = pygame.transform.scale(blue_surf, (40, 40))
+
+class Piece(pygame.sprite.Sprite):
     """ Represent a game piece - each has a color: r(ed) or b(lue) """
     def __init__(self, color):
+        # When using the Sprite class, you must call this in the init function
+        super(Piece, self).__init__()
         self.color = color
-        self.image = 'piece_red.png' if self.color == 'r' else 'piece_blue.png'
+        self.surf = red_surf if self.color == 'r' else blue_surf
 
 class Square:
     """ Represents a square on the board, including its position and width """
@@ -41,12 +55,9 @@ class Square:
         pygame.draw.rect(view, const.Color.Black,
                         (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
         if self.piece is not None:
-            if self.piece.color == 'r':
-                # Draw red piece sprite here
-                pass
-            else:
-                # Draw blue piece sprite here
-                pass
+            surf_to_draw = self.piece.surf
+            surf_center = (self.x+5, self.y+5)
+            view.blit(surf_to_draw, surf_center)
 
 def create_board():
     """ Creates the board with squares in the appropriate locations - this is the MODEL """
@@ -55,11 +66,11 @@ def create_board():
         for col in range(const.BOARD_SIZE):
             if row == 0 or row == 8:
                 # We want an entire row of squares for the top and bottom rows
-                board[row][col] = Square(row, col, const.SQUARE_SIZE)
+                board[row][col] = Square(row, col, const.SQUARE_SIZE-const.SQUARE_THICKNESS)
             else:
                 # For other rows, we want only the first and last positions to be squares
                 if col == 0 or col == 8:
-                    board[row][col] = Square(row, col, const.SQUARE_SIZE)
+                    board[row][col] = Square(row, col, const.SQUARE_SIZE-const.SQUARE_THICKNESS)
     return board
 
 def initialize_pieces(board):
@@ -103,6 +114,8 @@ def draw_board(board, screen):
     # TODO: TEST CODE UNTIL 'END TEST CODE' - REMOVE
     board[0][0].piece = Piece('r')
     board[0][0].highlighted = True
+    board[8][8].piece = Piece('b')
+    board[8][8].highlighted = True
     # END TEST CODE
 
     for row in board:
@@ -120,12 +133,7 @@ def draw_board(board, screen):
 
 def main():
     """ Set up the game and run the main game loop
-    This functions as the Controller component of MVC """
-    pygame.init()   # Initialize the pygame module
-
-    # Create a surface, which represents the View component of MVC of (width, height)
-    # This surface will function as the "root" display
-    screen = pygame.display.set_mode((const.SCREEN_WIDTH, const.SCREEN_HEIGHT))
+    This functions as the CONTROLLER component of MVC """
 
     # Create a board (MODEL) to be used for storing game data
     board = create_board()
