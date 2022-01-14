@@ -48,8 +48,19 @@ class Square:
                 # Draw blue piece sprite here
                 pass
 
-# Create a 2D array to represent the board and hold piece locations
-board = [[Square(row, col, 50) for col in range(const.BOARD_SIZE)] for row in range(const.BOARD_SIZE)]
+def create_board():
+    """ Creates the board with squares in the appropriate locations - this is the MODEL """
+    board = [[None for col in range(const.BOARD_SIZE)] for row in range(const.BOARD_SIZE)]
+    for row in range(const.BOARD_SIZE):
+        for col in range(const.BOARD_SIZE):
+            if row == 0 or row == 8:
+                # We want an entire row of squares for the top and bottom rows
+                board[row][col] = Square(row, col, const.SQUARE_SIZE)
+            else:
+                # For other rows, we want only the first and last positions to be squares
+                if col == 0 or col == 8:
+                    board[row][col] = Square(row, col, const.SQUARE_SIZE)
+    return board
 
 def initialize_pieces(board):
     """ Randomly assign two pieces on the board for the human and computer players """
@@ -115,6 +126,9 @@ def main():
     # Create a surface, which represents the View component of MVC of (width, height)
     # This surface will function as the "root" display
     screen = pygame.display.set_mode((const.SCREEN_WIDTH, const.SCREEN_HEIGHT))
+
+    # Create a board (MODEL) to be used for storing game data
+    board = create_board()
 
     # Load piece sprites, which will be drawn onto the surface
 
