@@ -13,7 +13,7 @@ SQUARE_THICKNESS = 3
 # This is a great way to do "enums" in Python
 class Color:
     Black = (0, 0, 0)
-    Gray = (127, 127, 127)
+    Gray = (200, 200, 200)
     DarkGray = (50, 50, 50)
     White = (255, 255, 255)
     Red = (255, 0, 0)

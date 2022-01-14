@@ -1,8 +1,9 @@
+from asyncio.proactor_events import constants
 import pygame
 from pygame.sprite import collide_mask
 from draw_board import draw_board
 import sprites
-import constants
+import constants as const
 
 from pygame.locals import (
     K_UP,
@@ -20,6 +21,36 @@ class Piece:
         self.color = color
         self.image = 'piece_red.png' if self.color == 'r' else 'piece_blue.png'
 
+class Square:
+    """ Represents a square on the board, including its position and width """
+    def __init__(self, row, col, width):
+        self.row = row
+        self.col = col
+        self.x = int(row*width)
+        self.y = int(col*width)
+        self.highlighted = False
+        self.piece = None
+
+    def draw(self, view):
+        origin_left = self.col * (const.SQUARE_SIZE - const.SQUARE_THICKNESS)
+        origin_top = self.row * (const.SQUARE_SIZE - const.SQUARE_THICKNESS)
+        if self.highlighted:
+            # Draw a filled rectangle before drawing the border so it will appear filled
+            pygame.draw.rect(view, const.Color.Gray,
+                            (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE))
+        pygame.draw.rect(view, const.Color.Black,
+                        (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
+        if self.piece is not None:
+            if self.piece.color == 'r':
+                # Draw red piece sprite here
+                pass
+            else:
+                # Draw blue piece sprite here
+                pass
+
+# Create a 2D array to represent the board and hold piece locations
+board = [[Square(row, col, 50) for col in range(const.BOARD_SIZE)] for row in range(const.BOARD_SIZE)]
+
 def initialize_pieces(board):
     """ Randomly assign two pieces on the board for the human and computer players """
     pass
@@ -32,39 +63,49 @@ def show_possible_moves(board, roll):
     """ Checks the possible moves on the board using the result of the die roll """
     pass
 
-def draw_board(screen):
+def draw_board(board, screen):
     """ Draws the board for the game, which is a 9x9 grid with a 'hollow' center
         This is the method that converts the MODEL to the VIEW """
     # Create a board surface of the appropriate size based on constant
-    board = pygame.Surface((constants.BOARD_SIZE*50+10, constants.BOARD_SIZE*50+10))
-    board.fill(constants.Color.White)
+    view = pygame.Surface((const.BOARD_SIZE*const.SQUARE_SIZE, const.BOARD_SIZE*const.SQUARE_SIZE))
+    view.fill(const.Color.White)
 
-    # Set values to use to move the origin as each square is drawn
-    origin_left, origin_top = 0, 0
-    row_min, col_min, row_max, col_max = 0, 0, constants.BOARD_SIZE-1, constants.BOARD_SIZE-1
-    # This is used to ensure that squares' edges collapse into each other rather than stacking; otherwise, the inner
-    # borders would be thicker than the outer ones
-    space_to_move = constants.SQUARE_SIZE-constants.SQUARE_THICKNESS
-    for row in range(constants.BOARD_SIZE):  # 0-8
-        origin_left = 0  # Reset after each row
-        for col in range(constants.BOARD_SIZE):  # 0-8
-            if row == row_min or row == row_max:
-                pygame.draw.rect(board, constants.Color.Black,
-                                 (origin_left, origin_top, constants.SQUARE_SIZE, constants.SQUARE_SIZE), 3)
-            else:
-                if col == col_min or col == col_max:
-                    pygame.draw.rect(board, constants.Color.Black,
-                                     (origin_left, origin_top, constants.SQUARE_SIZE, constants.SQUARE_SIZE), 3)
-            origin_left += space_to_move
-        origin_top += space_to_move
+    # # Set values to use to move the origin as each square is drawn
+    # origin_left, origin_top = 0, 0
+    # row_min, col_min, row_max, col_max = 0, 0, const.BOARD_SIZE-1, const.BOARD_SIZE-1
+    # # This is used to ensure that squares' edges collapse into each other rather than stacking; otherwise, the inner
+    # # borders would be thicker than the outer ones
+    # space_to_move = const.SQUARE_SIZE-const.SQUARE_THICKNESS
+    # for row in range(const.BOARD_SIZE):  # 0-8
+    #     origin_left = 0  # Reset after each row
+    #     for col in range(const.BOARD_SIZE):  # 0-8
+    #         if row == row_min or row == row_max:
+    #             pygame.draw.rect(board, const.Color.Black,
+    #                              (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
+    #         else:
+    #             if col == col_min or col == col_max:
+    #                 pygame.draw.rect(board, const.Color.Black,
+    #                                  (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
+    #         origin_left += space_to_move
+    #     origin_top += space_to_move
+
+    # TODO: TEST CODE UNTIL 'END TEST CODE' - REMOVE
+    board[0][0].piece = Piece('r')
+    board[0][0].highlighted = True
+    # END TEST CODE
+
+    for row in board:
+        for col in row:
+            if col:
+                col.draw(view)
 
     # Calculate the exact center of the board for calling the blit method
-    board_center = (
-            (constants.SCREEN_WIDTH-board.get_width())/2,
-            (constants.SCREEN_HEIGHT-board.get_height())/2
+    view_center = (
+            (const.SCREEN_WIDTH-view.get_width())/2,
+            (const.SCREEN_HEIGHT-view.get_height())/2
     )
 
-    screen.blit(board, board_center)
+    screen.blit(view, view_center)
 
 def main():
     """ Set up the game and run the main game loop
@@ -73,7 +114,7 @@ def main():
 
     # Create a surface, which represents the View component of MVC of (width, height)
     # This surface will function as the "root" display
-    screen = pygame.display.set_mode((constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((const.SCREEN_WIDTH, const.SCREEN_HEIGHT))
 
     # Load piece sprites, which will be drawn onto the surface
 
@@ -98,12 +139,12 @@ def main():
 
         # Everything must be drawn from scratch each time the game loop runs.
         # So first fill everything with the background color
-        screen.fill(constants.Color.White)
+        screen.fill(const.Color.White)
 
         # Reflect the changes to the Model onto the View for the User
 
         # Draw the board onto the screen
-        draw_board(screen)
+        draw_board(board, screen)
 
         # The flip method updates the entire screen with every change since it was last called
         pygame.display.flip()
