@@ -11,11 +11,15 @@ from pygame.locals import (
     K_LEFT,
     K_RIGHT,
     K_ESCAPE,
+    MOUSEBUTTONDOWN,
     KEYDOWN,
     QUIT,
 )
 
 pygame.init()   # Initialize the pygame module
+
+FPS = 30  # frames per second setting (number of times the screen refreshes per second)
+clock = pygame.time.Clock()
 
 # Create a surface, which represents the VIEW component of MVC of (width, height)
 # This surface will function as the "root" display
@@ -118,6 +122,7 @@ def draw_board(board, screen):
     board[8][8].highlighted = True
     # END TEST CODE
 
+    # Draw pieces on board (if they are in a spot)
     for row in board:
         for col in row:
             if col:
@@ -143,8 +148,7 @@ def main():
     # As long as running is True, the game will continue
     running = True
 
-    # Main game loop
-    while running:
+    while running:  # Main game loop
         # Look through new events generated this iteration
         for event in pygame.event.get():
             # Check if the user hit a key
@@ -154,8 +158,14 @@ def main():
                     running = False
             
             # If the user clicked the window close button, stop the game loop
-            elif event.type == QUIT:
+            if event.type == QUIT:
                 running = False
+
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:  # 1 == left click
+                    print("click! at", event.pos)
+                if event.button == 3:  # 3 == right click
+                    print("right click!")
 
         # Update game objects and data structures (i.e., Model of MVC) here
 
@@ -170,6 +180,7 @@ def main():
 
         # The flip method updates the entire screen with every change since it was last called
         pygame.display.flip()
+        clock.tick(FPS)
 
     pygame.quit()   # If the game loop is exited, quit the game and close the window.
 
