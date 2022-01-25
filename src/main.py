@@ -44,20 +44,18 @@ class Square:
     def __init__(self, row, col, width):
         self.row = row
         self.col = col
-        self.x = int(row*width)
-        self.y = int(col*width)
+        self.x = int(col*width)
+        self.y = int(row*width)
         self.highlighted = False
         self.piece = None
 
     def draw(self, view):
-        origin_left = self.col * (const.SQUARE_SIZE - const.SQUARE_THICKNESS)
-        origin_top = self.row * (const.SQUARE_SIZE - const.SQUARE_THICKNESS)
         if self.highlighted:
             # Draw a filled rectangle before drawing the border so it will appear filled
             pygame.draw.rect(view, const.Color.Gray,
-                            (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE))
+                            (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE))
         pygame.draw.rect(view, const.Color.Black,
-                        (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
+                        (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
         if self.piece is not None:
             surf_to_draw = self.piece.surf
             surf_center = (self.x+5, self.y+5)
@@ -93,7 +91,10 @@ def draw_board(board, screen):
     """ Draws the board for the game, which is a 9x9 grid with a 'hollow' center
         This is the method that converts the MODEL to the VIEW """
     # Create a board surface of the appropriate size based on constant
-    view = pygame.Surface((const.BOARD_SIZE*const.SQUARE_SIZE, const.BOARD_SIZE*const.SQUARE_SIZE))
+    view_width = const.BOARD_SIZE*(const.SQUARE_SIZE-const.SQUARE_THICKNESS)+10
+    view_height = const.BOARD_SIZE*(const.SQUARE_SIZE-const.SQUARE_THICKNESS)+10
+    view = pygame.Surface((view_width, view_height))
+
     view.fill(const.Color.White)
 
     # # Set values to use to move the origin as each square is drawn
