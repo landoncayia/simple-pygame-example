@@ -1,4 +1,5 @@
 from asyncio.proactor_events import constants
+from re import X
 import pygame
 from pygame.sprite import collide_mask
 from draw_board import draw_board
@@ -91,9 +92,7 @@ def draw_board(board, screen):
     """ Draws the board for the game, which is a 9x9 grid with a 'hollow' center
         This is the method that converts the MODEL to the VIEW """
     # Create a board surface of the appropriate size based on constant
-    view_width = const.BOARD_SIZE*(const.SQUARE_SIZE-const.SQUARE_THICKNESS)+10
-    view_height = const.BOARD_SIZE*(const.SQUARE_SIZE-const.SQUARE_THICKNESS)+10
-    view = pygame.Surface((view_width, view_height))
+    view = pygame.Surface((const.BOARD_WIDTH, const.BOARD_HEIGHT))
 
     view.fill(const.Color.White)
 
@@ -129,13 +128,7 @@ def draw_board(board, screen):
             if col:
                 col.draw(view)
 
-    # Calculate the exact center of the board for calling the blit method
-    view_center = (
-            (const.SCREEN_WIDTH-view.get_width())/2,
-            (const.SCREEN_HEIGHT-view.get_height())/2
-    )
-
-    screen.blit(view, view_center)
+    screen.blit(view, const.BOARD_ORIGIN)
 
 def main():
     """ Set up the game and run the main game loop
@@ -165,6 +158,13 @@ def main():
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:  # 1 == left click
                     print("click! at", event.pos)
+                    pos_x, pos_y = event.pos
+                    for col in range(9):
+                        for row in range(9):
+                            x = const.BOARD_ORIGIN[0]+(row*47)  # have to add board's x origin to get the right spot
+                            y = const.BOARD_ORIGIN[1]+(col*47)     # have to add board's y origin to get the right spot
+                            if x < pos_x < x+47 and y < pos_y < y+47:
+                                print(row, col)
                 if event.button == 3:  # 3 == right click
                     print("right click!")
 
