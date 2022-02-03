@@ -1,5 +1,6 @@
 from asyncio.proactor_events import constants
 from re import X
+from shutil import move
 import pygame
 from pygame.sprite import collide_mask
 from draw_board import draw_board
@@ -75,6 +76,83 @@ def create_board():
                 if col == 0 or col == 8:
                     board[row][col] = Square(row, col, const.SQUARE_SIZE-const.SQUARE_THICKNESS)
     return board
+
+def move_left(row, col):
+    """ Helper function for find_square; moves counter-clockwise one square """
+    if row == 0:
+        if col == 0:
+            # Upper-left corner -> move down a square
+            row += 1
+        else:
+            # First row -> move left a square
+            col -= 1
+    elif col == 0:
+        if row == 8:
+            # Lower-left corner -> move right a square
+            col += 1
+        else:
+            # First col -> move down a square
+            row += 1
+    elif row == 8:
+        if col == 8:
+            # Lower-right corner -> move up a square
+            row -= 1
+        else:
+            # Last row -> move right a square
+            col += 1
+    elif col == 8:
+        if row == 0:
+            # Upper-right corner -> move left a square
+            col -= 1
+        else:
+            # Last col -> move up a square
+            row -= 1
+    return row, col
+    
+def move_right(row, col):
+    """ Helper function for find_square; moves clockwise one square """
+    if row == 0:
+        if col == 8:
+            # Upper-right corner -> move down a square
+            row += 1
+        else:
+            # First row -> move right a square
+            col += 1
+    elif col == 8:
+        if row == 8:
+            # Lower-right corner -> move left a square
+            col -= 1
+        else:
+            # Last col -> move down a square
+            row += 1
+    elif row == 8:
+        if col == 0:
+            # Lower-left corner -> move up a square
+            row -= 1
+        else:
+            # Last row -> move left a square
+            col -= 1
+    elif col == 0:
+        if row == 0:
+            # Upper-left corner -> move right a square
+            col += 1
+        else:
+            # First col -> move up a square
+            row -= 1
+    return row, col
+
+def find_square(start, count, direction):
+    """ Determine which square is 'count' squares away from 'start' in
+    'direction' ('l' for left/counter-clockwise or 'r' for right/clockwise) """
+    row = start[0]
+    col = start[1]
+    
+    for _ in range(count):
+        if direction == 'l':
+            row, col = move_left(row, col)
+        else:
+            row, col = move_right(row, col)
+    return row, col
 
 def initialize_pieces(board):
     """ Randomly assign two pieces on the board for the human and computer players """
@@ -161,10 +239,12 @@ def main():
                     pos_x, pos_y = event.pos
                     for col in range(9):
                         for row in range(9):
-                            x = const.BOARD_ORIGIN[0]+(row*47)  # have to add board's x origin to get the right spot
-                            y = const.BOARD_ORIGIN[1]+(col*47)     # have to add board's y origin to get the right spot
+                            x = const.BOARD_ORIGIN[0]+(col*47)  # have to add board's x origin to get the right spot
+                            y = const.BOARD_ORIGIN[1]+(row*47)     # have to add board's y origin to get the right spot
                             if x < pos_x < x+47 and y < pos_y < y+47:
-                                print(row, col)
+                                r, c = find_square((row, col), 1, 'r')
+                                print(f"row: {row}, col: {col}")
+                                print(f"r: {r}, c: {c}")
                 if event.button == 3:  # 3 == right click
                     print("right click!")
 
