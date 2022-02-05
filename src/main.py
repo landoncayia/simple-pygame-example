@@ -6,6 +6,7 @@ from pygame.sprite import collide_mask
 from draw_board import draw_board
 import sprites
 import constants as const
+import random
 
 from pygame.locals import (
     K_UP,
@@ -156,7 +157,19 @@ def find_square(start, count, direction):
 
 def initialize_pieces(board):
     """ Randomly assign two pieces on the board for the human and computer players """
-    pass
+    # Pick four random locations, without replacement; first two are human
+    # player's piece locations, second two are computer player's piece locations
+    sample = random.sample(range(32), 4)
+    for n in range(4):
+        start_pos = [0, 0]
+        # Starting from the top-left square, move n squares clockwise to find piece's initial location
+        piece_row, piece_col = find_square(start_pos, sample[n], 'r')
+        # First two positions for red, second two for blue
+        if n in [0, 1]:
+            board[piece_row][piece_col].piece = Piece('r')
+        else:
+            board[piece_row][piece_col].piece = Piece('b')
+
 
 def die_roll():
     """ Simulates rolling one six-sided die, returning the result (int) """
@@ -194,10 +207,10 @@ def draw_board(board, screen):
     #     origin_top += space_to_move
 
     # TODO: TEST CODE UNTIL 'END TEST CODE' - REMOVE
-    board[0][0].piece = Piece('r')
-    board[0][0].highlighted = True
-    board[8][8].piece = Piece('b')
-    board[8][8].highlighted = True
+    # board[0][0].piece = Piece('r')
+    # board[0][0].highlighted = True
+    # board[8][8].piece = Piece('b')
+    # board[8][8].highlighted = True
     # END TEST CODE
 
     # Draw pieces on board (if they are in a spot)
@@ -215,7 +228,8 @@ def main():
     # Create a board (MODEL) to be used for storing game data
     board = create_board()
 
-    # Load piece sprites, which will be drawn onto the surface
+    # Set initial piece locations on board for start of game
+    initialize_pieces(board)
 
     # As long as running is True, the game will continue
     running = True
