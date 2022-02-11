@@ -64,12 +64,17 @@ class Square:
         self.x = int(col*width)
         self.y = int(row*width)
         self.highlighted = False
+        self.capturable = False
         self.piece = None
 
     def draw(self, view):
         if self.highlighted:
             # Draw a filled rectangle before drawing the border so it will appear filled
             pygame.draw.rect(view, const.Color.Gray,
+                            (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE))
+        if self.capturable:
+            # Do the same as highlighted, except make it tinted red to indicate capturability
+            pygame.draw.rect(view, const.Color.CaptureRed,
                             (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE))
         pygame.draw.rect(view, const.Color.Black,
                         (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
@@ -189,9 +194,28 @@ def die_roll():
     """ Simulates rolling one six-sided die, returning the result (int) """
     return random.randint(1, 6)
 
-def show_possible_moves(board, roll):
+def show_possible_moves(board, roll, player):
     """ Checks the possible moves on the board using the result of the die roll """
-    pass
+    for row in board:
+        for square in row:
+            # If we land on a square, and the square contains a piece
+            if square and square.piece:
+                if square.piece.color == 'b' and player == 'p':
+                    # Get the square that is 'roll' squares counter-clockwise
+                    row_left, col_left = find_square((square.row, square.col), roll, 'l')
+                    # Get the square that is 'roll' squares clockwise
+                    row_right, col_right = find_square((square.row, square.col), roll, 'r')
+                    # We don't want the square to be an eligible move if a piece of the same color is on it
+                    if board[row_left][col_left].piece and board[row_left][col_left].piece.color == 'r':
+                        board[row_left][col_left].capturable = True
+                    elif not board[row_left][col_left].piece:
+                        board[row_left][col_left].highlighted = True
+                    if board[row_right][col_right].piece and board[row_right][col_right].piece.color == 'r':
+                        board[row_right][col_right].capturable = True
+                    elif not board[row_right][col_right].piece:
+                        board[row_right][col_right].highlighted = True
+
+
 
 def draw_view(board, screen, roll=None):
     """ Draws the view for the game, which includes:
@@ -250,11 +274,14 @@ def main():
     # Variable to hold the current state of the game
     #   proll indicates that it is the player's turn to roll the die
     #   croll indicates that it is the computer's turn to roll the die
+    #   pmove indicates that the player may move without capturing a piece
+    #   cmove indicates that the computer may move without capturing a piece
     #   pcptr indicates that the player may capture a computer piece
     #   ccptr indicates that the computer may capture a player piece
     #   gmovr indicates that the game is over; someone has won
     # Human player always gets the first move
     state = 'proll'
+    active_player = 'p'  # p or c
 
     # Variable to hold the current die roll result
     roll = None
@@ -278,7 +305,10 @@ def main():
                         pos_x, pos_y = event.pos
                         if 50 < pos_x < 135 and 200 < pos_y < 245:
                             roll = die_roll()
-                            print(roll)
+                            state = 'pmove'
+
+            if state == 'pmove':
+                possible_moves = show_possible_moves(board, roll, active_player)
 
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:

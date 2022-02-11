@@ -28,6 +28,7 @@ class Color:
     DarkGray = (50, 50, 50)
     White = (255, 255, 255)
     Red = (255, 0, 0)
+    CaptureRed = (255, 140, 140)
     Blue = (0, 0, 255)
     Teal = (0, 137, 123)
 
