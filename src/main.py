@@ -34,6 +34,20 @@ blue_surf = pygame.image.load('src/images/blue_piece.png')
 red_surf = pygame.transform.scale(red_surf, (40, 40))
 blue_surf = pygame.transform.scale(blue_surf, (40, 40))
 
+# Create and resize surfaces for die sides
+one_surf = pygame.image.load('src/images/die-one.png')
+two_surf = pygame.image.load('src/images/die-two.png')
+three_surf = pygame.image.load('src/images/die-three.png')
+four_surf = pygame.image.load('src/images/die-four.png')
+five_surf = pygame.image.load('src/images/die-five.png')
+six_surf = pygame.image.load('src/images/die-six.png')
+one_surf = pygame.transform.scale(one_surf, (40, 40))
+two_surf = pygame.transform.scale(two_surf, (40, 40))
+three_surf = pygame.transform.scale(three_surf, (40, 40))
+four_surf = pygame.transform.scale(four_surf, (40, 40))
+five_surf = pygame.transform.scale(five_surf, (40, 40))
+six_surf = pygame.transform.scale(six_surf, (40, 40))
+
 class Piece(pygame.sprite.Sprite):
     """ Represent a game piece - each has a color: r(ed) or b(lue) """
     def __init__(self, color):
@@ -173,53 +187,52 @@ def initialize_pieces(board):
 
 def die_roll():
     """ Simulates rolling one six-sided die, returning the result (int) """
-    pass
+    return random.randint(1, 6)
 
 def show_possible_moves(board, roll):
     """ Checks the possible moves on the board using the result of the die roll """
     pass
 
-def draw_board(board, screen):
-    """ Draws the board for the game, which is a 9x9 grid with a 'hollow' center
+def draw_view(board, screen, roll=None):
+    """ Draws the view for the game, which includes:
+        The board, the current game state and the die-rolling mechanism
         This is the method that converts the MODEL to the VIEW """
+
+    # ===== BOARD =====
     # Create a board surface of the appropriate size based on constant
-    view = pygame.Surface((const.BOARD_WIDTH, const.BOARD_HEIGHT))
-
-    view.fill(const.Color.White)
-
-    # # Set values to use to move the origin as each square is drawn
-    # origin_left, origin_top = 0, 0
-    # row_min, col_min, row_max, col_max = 0, 0, const.BOARD_SIZE-1, const.BOARD_SIZE-1
-    # # This is used to ensure that squares' edges collapse into each other rather than stacking; otherwise, the inner
-    # # borders would be thicker than the outer ones
-    # space_to_move = const.SQUARE_SIZE-const.SQUARE_THICKNESS
-    # for row in range(const.BOARD_SIZE):  # 0-8
-    #     origin_left = 0  # Reset after each row
-    #     for col in range(const.BOARD_SIZE):  # 0-8
-    #         if row == row_min or row == row_max:
-    #             pygame.draw.rect(board, const.Color.Black,
-    #                              (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
-    #         else:
-    #             if col == col_min or col == col_max:
-    #                 pygame.draw.rect(board, const.Color.Black,
-    #                                  (origin_left, origin_top, const.SQUARE_SIZE, const.SQUARE_SIZE), const.SQUARE_THICKNESS)
-    #         origin_left += space_to_move
-    #     origin_top += space_to_move
-
-    # TODO: TEST CODE UNTIL 'END TEST CODE' - REMOVE
-    # board[0][0].piece = Piece('r')
-    # board[0][0].highlighted = True
-    # board[8][8].piece = Piece('b')
-    # board[8][8].highlighted = True
-    # END TEST CODE
-
+    view_board = pygame.Surface((const.BOARD_WIDTH, const.BOARD_HEIGHT))
+    view_board.fill(const.Color.White)
     # Draw pieces on board (if they are in a spot)
     for row in board:
         for col in row:
             if col:
-                col.draw(view)
+                col.draw(view_board)
+    screen.blit(view_board, const.BOARD_ORIGIN)
 
-    screen.blit(view, const.BOARD_ORIGIN)
+    # ===== DIE ROLLING =====
+    view_die = pygame.Surface((140, 300))
+    view_die.fill(const.Color.White)
+    pygame.draw.rect(view_die, const.Color.Teal, (0, 0, 140, 300), 5)
+    pygame.draw.rect(view_die, const.Color.DarkGray, (26, 50, 85, 45), 3)
+    # Define font for text
+    font = pygame.font.SysFont(None, 36)
+    roll_txt = font.render('Roll', True, const.Color.Red)
+    view_die.blit(roll_txt, (45, 60))
+    # If there is a die roll, display the correct die
+    if roll:
+        if roll == 1:
+            view_die.blit(one_surf, (45, 160))
+        if roll == 2:
+            view_die.blit(two_surf, (45, 160))
+        if roll == 3:
+            view_die.blit(three_surf, (45, 160))
+        if roll == 4:
+            view_die.blit(four_surf, (45, 160))
+        if roll == 5:
+            view_die.blit(five_surf, (45, 160))
+        if roll == 6:
+            view_die.blit(six_surf, (45, 160))
+    screen.blit(view_die, (23, 150))
 
 def main():
     """ Set up the game and run the main game loop
@@ -234,6 +247,18 @@ def main():
     # As long as running is True, the game will continue
     running = True
 
+    # Variable to hold the current state of the game
+    #   proll indicates that it is the player's turn to roll the die
+    #   croll indicates that it is the computer's turn to roll the die
+    #   pcptr indicates that the player may capture a computer piece
+    #   ccptr indicates that the computer may capture a player piece
+    #   gmovr indicates that the game is over; someone has won
+    # Human player always gets the first move
+    state = 'proll'
+
+    # Variable to hold the current die roll result
+    roll = None
+
     while running:  # Main game loop
         # Look through new events generated this iteration
         for event in pygame.event.get():
@@ -247,8 +272,16 @@ def main():
             if event.type == QUIT:
                 running = False
 
+            if state == 'proll':
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:  # 1 == left click
+                        pos_x, pos_y = event.pos
+                        if 50 < pos_x < 135 and 200 < pos_y < 245:
+                            roll = die_roll()
+                            print(roll)
+
             if event.type == MOUSEBUTTONDOWN:
-                if event.button == 1:  # 1 == left click
+                if event.button == 1:
                     print("click! at", event.pos)
                     pos_x, pos_y = event.pos
                     for col in range(9):
@@ -269,9 +302,8 @@ def main():
         screen.fill(const.Color.White)
 
         # Reflect the changes to the Model onto the View for the User
-
         # Draw the board onto the screen
-        draw_board(board, screen)
+        draw_view(board, screen, roll)
 
         # The flip method updates the entire screen with every change since it was last called
         pygame.display.flip()

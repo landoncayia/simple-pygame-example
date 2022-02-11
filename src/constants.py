@@ -1,4 +1,5 @@
 from pygame import Color
+from pygame import font
 from enum import Enum
 
 # Define constants for screen width and height, in pixels
@@ -28,6 +29,7 @@ class Color:
     White = (255, 255, 255)
     Red = (255, 0, 0)
     Blue = (0, 0, 255)
+    Teal = (0, 137, 123)
 
 # Define constants for colors used in game View
 BACKGROUND_COLOR = Color.White
