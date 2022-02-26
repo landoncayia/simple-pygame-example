@@ -20,6 +20,9 @@ BOARD_ORIGIN = (
     (SCREEN_HEIGHT-BOARD_HEIGHT)/2
 )
 
+# Constants for other game rules
+NUM_PIECES = 2
+
 # Define Color class to store various useful color values
 # This is a great way to do "enums" in Python
 class Color:

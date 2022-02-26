@@ -49,10 +49,11 @@ five_surf = pygame.transform.scale(five_surf, (40, 40))
 six_surf = pygame.transform.scale(six_surf, (40, 40))
 
 class Piece(pygame.sprite.Sprite):
-    """ Represent a game piece - each has a color: r(ed) or b(lue) """
-    def __init__(self, color):
+    """ Represent a game piece - each has a color: r(ed) or b(lue) and an id, starting from 0 """
+    def __init__(self, id, color):
         # When using the Sprite class, you must call this in the init function
         super(Piece, self).__init__()
+        self.id = 0
         self.color = color
         self.surf = red_surf if self.color == 'r' else blue_surf
 
@@ -202,18 +203,22 @@ def find_square(start, count, direction):
 
 def initialize_pieces(board):
     """ Randomly assign two pieces on the board for the human and computer players """
-    # Pick four random locations, without replacement; first two are human
-    # player's piece locations, second two are computer player's piece locations
-    sample = random.sample(range(32), 4)
-    for n in range(4):
+    
+    # We want each player to have NUM_PIECES; take a random sample
+    pieces_to_add = const.NUM_PIECES*2
+    sample = random.sample(range(32), pieces_to_add)
+    
+    for n in range(pieces_to_add):
+        # Starting from the top-left square, move n squares clockwise ('r') to find piece's initial location
         start_pos = [0, 0]
-        # Starting from the top-left square, move n squares clockwise to find piece's initial location
         piece_row, piece_col = find_square(start_pos, sample[n], 'r')
-        # First two positions for red, second two for blue
-        if n in [0, 1]:
-            board[piece_row][piece_col].piece = Piece('r')
+        if n < pieces_to_add / 2:
+            # First half of the pieces for blue (player); use n as id
+            board[piece_row][piece_col].piece = Piece(n, 'r')
         else:
-            board[piece_row][piece_col].piece = Piece('b')
+            # Second half of the pieces for red (computer); use (n % pieces_to_add) as id
+            # Then, blue and red will have the same set of ids
+            board[piece_row][piece_col].piece = Piece((n % pieces_to_add), 'b')
 
 
 def die_roll():
@@ -348,6 +353,7 @@ def main():
                     if event.button == 1:
                         pos_x, pos_y = event.pos
                         print(type(pos_x), type(pos_y))
+                        # Get the row and column of the square selected
                         row, col = coords_to_square(pos_x, pos_y)
                         if board[row][col].piece and board[row][col].piece.color == 'b':
                             # Blue (player) selected one of his/her pieces
