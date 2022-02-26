@@ -53,7 +53,7 @@ class Piece(pygame.sprite.Sprite):
     def __init__(self, id, color):
         # When using the Sprite class, you must call this in the init function
         super(Piece, self).__init__()
-        self.id = 0
+        self.id = id
         self.color = color
         self.surf = red_surf if self.color == 'r' else blue_surf
 
@@ -216,9 +216,9 @@ def initialize_pieces(board):
             # First half of the pieces for blue (player); use n as id
             board[piece_row][piece_col].piece = Piece(n, 'r')
         else:
-            # Second half of the pieces for red (computer); use (n % pieces_to_add) as id
+            # Second half of the pieces for red (computer); use (n % NUM_PIECES) as id
             # Then, blue and red will have the same set of ids
-            board[piece_row][piece_col].piece = Piece((n % pieces_to_add), 'b')
+            board[piece_row][piece_col].piece = Piece((n % const.NUM_PIECES), 'b')
 
 
 def die_roll():
@@ -227,24 +227,36 @@ def die_roll():
 
 def find_possible_moves(board, roll, player):
     """ Checks the possible moves on the board using the result of the die roll """
+    # Possible moves will be a dict in the form <piece_id: [(row, col), (row, col), ...]>
+    possible_moves = {_: [] for _ in range(int(const.NUM_PIECES))}
     for row in board:
         for square in row:
             if square and square.piece:
                 # If we land on a square, and the square contains a piece
                 if square.piece.color == 'b' and player == 'p':
+                    # Get piece id
+                    this_id = square.piece.id
                     # Get the square that is 'roll' squares counter-clockwise
                     row_left, col_left = find_square((square.row, square.col), roll, 'l')
                     # Get the square that is 'roll' squares clockwise
                     row_right, col_right = find_square((square.row, square.col), roll, 'r')
-                    # We don't want the square to be an eligible move if a piece of the same color is on it
                     if board[row_left][col_left].piece and board[row_left][col_left].piece.color == 'r':
+                        # Square has a red piece on it -> blue can capture
                         board[row_left][col_left].capturable = True
+                        possible_moves[this_id].append((row_left, col_left))
                     elif not board[row_left][col_left].piece:
+                        # Square is empty -> blue can move there
                         board[row_left][col_left].highlighted = True
+                        possible_moves[this_id].append((row_left, col_left))
                     if board[row_right][col_right].piece and board[row_right][col_right].piece.color == 'r':
+                        # Square has a red piece on it -> bllue can capture
                         board[row_right][col_right].capturable = True
+                        possible_moves[this_id].append((row_right, col_right))
                     elif not board[row_right][col_right].piece:
+                        # Square has a red piece on it -> blue can move there
                         board[row_right][col_right].highlighted = True
+                        possible_moves[this_id].append((row_right, col_right))
+    return possible_moves
 
 def coords_to_square(pos_x, pos_y):
     """ Converts pixel coordinates from the user's pointer location to a square """
@@ -324,6 +336,9 @@ def main():
     # Variable to hold the current die roll result
     roll = None
 
+    # Keep track of which piece id is selected
+    selected_id = None
+
     while running:  # Main game loop
         # Look through new events generated this iteration
         for event in pygame.event.get():
@@ -344,11 +359,10 @@ def main():
                         if 50 < pos_x < 135 and 200 < pos_y < 245:
                             roll = die_roll()
                             state = 'pmove'
+                            selected_id = None
 
             elif state == 'pmove':
-                find_possible_moves(board, roll, active_player)
-                # Keep track of which piece the player has selected to move
-                selected_square = [None]
+                player_moves = find_possible_moves(board, roll, active_player)
                 if event.type == MOUSEBUTTONDOWN:
                     if event.button == 1:
                         pos_x, pos_y = event.pos
@@ -361,24 +375,27 @@ def main():
                             reset_board_attributes(board, False, True, False)
                             selected_row, selected_col = row, col
                             board[selected_row][selected_col].selected = True
-                        elif selected_square:
+                            selected_id = board[row][col].piece.id
+                        elif selected_id is not None:
                             # Blue (player) has a square selected
-                            if not board[row][col].piece:
-                                # Blue (player) moved to an empty square
-                                board[row][col].piece = Piece('b')
-                                board[selected_row][selected_col].piece = None
-                                # Reset all board attributes; player's turn is over
-                                reset_board_attributes(board, True, True, True)
-                                state = 'croll'
-                            else:
-                                # Blue (player) has clicked on a square with a piece
-                                if board[row][col].piece.color == 'r' and board[row][col].capturable:
-                                    # Blue (player) captures a red piece
-                                    board[row][col].piece = Piece('b')
+                            if (row, col) in player_moves[selected_id]:
+                                # The move is valid
+                                if not board[row][col].piece:
+                                    # Blue (player) moved to an empty square
+                                    board[row][col].piece = board[selected_row][selected_col].piece
                                     board[selected_row][selected_col].piece = None
                                     # Reset all board attributes; player's turn is over
                                     reset_board_attributes(board, True, True, True)
                                     state = 'croll'
+                                else:
+                                    # Blue (player) has clicked on a square with a piece
+                                    if board[row][col].piece.color == 'r' and board[row][col].capturable:
+                                        # Blue (player) captures a red piece
+                                        board[row][col].piece = board[selected_row][selected_col].piece
+                                        board[selected_row][selected_col].piece = None
+                                        # Reset all board attributes; player's turn is over
+                                        reset_board_attributes(board, True, True, True)
+                                        state = 'croll'
                             
             # if event.type == MOUSEBUTTONDOWN:
             #     if event.button == 1:
