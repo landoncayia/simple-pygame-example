@@ -21,7 +21,7 @@ BOARD_ORIGIN = (
 )
 
 # Constants for other game rules
-NUM_PIECES = 2
+NUM_PIECES = 2  # MUST BE EVEN
 
 # Define Color class to store various useful color values
 # This is a great way to do "enums" in Python
