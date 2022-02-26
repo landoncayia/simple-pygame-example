@@ -220,7 +220,7 @@ def die_roll():
     """ Simulates rolling one six-sided die, returning the result (int) """
     return random.randint(1, 6)
 
-def show_possible_moves(board, roll, player):
+def find_possible_moves(board, roll, player):
     """ Checks the possible moves on the board using the result of the die roll """
     for row in board:
         for square in row:
@@ -341,7 +341,7 @@ def main():
                             state = 'pmove'
 
             elif state == 'pmove':
-                show_possible_moves(board, roll, active_player)
+                find_possible_moves(board, roll, active_player)
                 # Keep track of which piece the player has selected to move
                 selected_square = [None]
                 if event.type == MOUSEBUTTONDOWN:
