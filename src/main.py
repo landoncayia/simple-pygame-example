@@ -64,13 +64,19 @@ class Square:
         self.x = int(col*width)
         self.y = int(row*width)
         self.highlighted = False
+        self.selected = False
         self.capturable = False
         self.piece = None
 
     def draw(self, view):
         if self.highlighted:
             # Draw a filled rectangle before drawing the border so it will appear filled
-            pygame.draw.rect(view, const.Color.Gray,
+            pygame.draw.rect(view, const.Color.LightGray,
+                            (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE))
+        if self.selected:
+            # Draw over the previous rectangle with medium gray because it is a square
+            # of a selected piece
+            pygame.draw.rect(view, const.Color.MediumGray,
                             (self.x, self.y, const.SQUARE_SIZE, const.SQUARE_SIZE))
         if self.capturable:
             # Do the same as highlighted, except make it tinted red to indicate capturability
@@ -96,6 +102,26 @@ def create_board():
                 if col == 0 or col == 8:
                     board[row][col] = Square(row, col, const.SQUARE_SIZE-const.SQUARE_THICKNESS)
     return board
+
+def reset_board_attributes(board, h, s, c):
+    """ Resets whichever board attributes are specified """
+    for row in range(const.BOARD_SIZE):
+        for col in range(const.BOARD_SIZE):
+            if row == 0 or row == 8:
+                if h:
+                    board[row][col].highlighted = False
+                if s:
+                    board[row][col].selected = False
+                if c:
+                    board[row][col].capturable = False
+            else:
+                if col == 0 or col == 8:
+                    if h:
+                        board[row][col].highlighted = False
+                    if s:
+                        board[row][col].selected = False
+                    if c:
+                        board[row][col].capturable = False
 
 def move_left(row, col):
     """ Helper function for find_square; moves counter-clockwise one square """
@@ -198,8 +224,8 @@ def show_possible_moves(board, roll, player):
     """ Checks the possible moves on the board using the result of the die roll """
     for row in board:
         for square in row:
-            # If we land on a square, and the square contains a piece
             if square and square.piece:
+                # If we land on a square, and the square contains a piece
                 if square.piece.color == 'b' and player == 'p':
                     # Get the square that is 'roll' squares counter-clockwise
                     row_left, col_left = find_square((square.row, square.col), roll, 'l')
@@ -215,7 +241,14 @@ def show_possible_moves(board, roll, player):
                     elif not board[row_right][col_right].piece:
                         board[row_right][col_right].highlighted = True
 
-
+def coords_to_square(pos_x, pos_y):
+    """ Converts pixel coordinates from the user's pointer location to a square """
+    for col in range(9):
+        for row in range(9):
+            x = const.BOARD_ORIGIN[0]+(col*47)  # have to add board's x origin to get the right spot
+            y = const.BOARD_ORIGIN[1]+(row*47)  # have to add board's y origin to get the right spot
+            if x < pos_x < x+47 and y < pos_y < y+47:
+                return row, col
 
 def draw_view(board, screen, roll=None):
     """ Draws the view for the game, which includes:
@@ -307,23 +340,46 @@ def main():
                             roll = die_roll()
                             state = 'pmove'
 
-            if state == 'pmove':
-                possible_moves = show_possible_moves(board, roll, active_player)
-
-            if event.type == MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    print("click! at", event.pos)
-                    pos_x, pos_y = event.pos
-                    for col in range(9):
-                        for row in range(9):
-                            x = const.BOARD_ORIGIN[0]+(col*47)  # have to add board's x origin to get the right spot
-                            y = const.BOARD_ORIGIN[1]+(row*47)     # have to add board's y origin to get the right spot
-                            if x < pos_x < x+47 and y < pos_y < y+47:
-                                r, c = find_square((row, col), 1, 'r')
-                                print(f"row: {row}, col: {col}")
-                                print(f"r: {r}, c: {c}")
-                if event.button == 3:  # 3 == right click
-                    print("right click!")
+            elif state == 'pmove':
+                show_possible_moves(board, roll, active_player)
+                # Keep track of which piece the player has selected to move
+                selected_square = [None]
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        pos_x, pos_y = event.pos
+                        print(type(pos_x), type(pos_y))
+                        row, col = coords_to_square(pos_x, pos_y)
+                        if board[row][col].piece and board[row][col].piece.color == 'b':
+                            # Blue (player) selected one of his/her pieces
+                            # First, clear any other selections ONLY
+                            reset_board_attributes(board, False, True, False)
+                            selected_row, selected_col = row, col
+                            board[selected_row][selected_col].selected = True
+                        elif selected_square:
+                            # Blue (player) has a square selected
+                            if not board[row][col].piece:
+                                # Blue (player) moved to an empty square
+                                board[row][col].piece = Piece('b')
+                                board[selected_row][selected_col].piece = None
+                                # Reset all board attributes; player's turn is over
+                                reset_board_attributes(board, True, True, True)
+                                state = 'croll'
+                            else:
+                                # Blue (player) has clicked on a square with a piece
+                                if board[row][col].piece.color == 'r' and board[row][col].capturable:
+                                    # Blue (player) captures a red piece
+                                    board[row][col].piece = Piece('b')
+                                    board[selected_row][selected_col].piece = None
+                                    # Reset all board attributes; player's turn is over
+                                    reset_board_attributes(board, True, True, True)
+                                    state = 'croll'
+                            
+            # if event.type == MOUSEBUTTONDOWN:
+            #     if event.button == 1:
+            #         pos_x, pos_y = event.pos
+            #         row, col = coords_to_square(pos_x, pos_y)
+            #     if event.button == 3:  # 3 == right click
+            #         print("right click!")
 
         # Update game objects and data structures (i.e., Model of MVC) here
 

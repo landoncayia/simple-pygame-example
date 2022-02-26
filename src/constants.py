@@ -24,8 +24,10 @@ BOARD_ORIGIN = (
 # This is a great way to do "enums" in Python
 class Color:
     Black = (0, 0, 0)
-    Gray = (200, 200, 200)
+    LightGray = (200, 200, 200)
+    MediumGray = (125, 125, 125)
     DarkGray = (50, 50, 50)
+
     White = (255, 255, 255)
     Red = (255, 0, 0)
     CaptureRed = (255, 140, 140)
