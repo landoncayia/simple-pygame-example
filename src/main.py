@@ -361,6 +361,14 @@ def draw_view(board, screen, state, roll=None):
     view_msg.blit(msg_txt, (20, 15))
     screen.blit(view_msg, (200, 15))
 
+def wait(ms):
+    """ Pause the running of the main game loop for <ms> milliseconds """
+    current_time = pygame.time.get_ticks()
+    continue_time = current_time + ms
+    while current_time < continue_time:
+        current_time = pygame.time.get_ticks()
+
+
 def main():
     """ Set up the game and run the main game loop
     This functions as the CONTROLLER component of MVC """
@@ -407,21 +415,23 @@ def main():
             if event.type == QUIT:
                 running = False
 
-            if state == 'proll':
-                active_player = 'p'
-                if event.type == MOUSEBUTTONDOWN:
-                    if event.button == 1:  # 1 == left click
-                        pos_x, pos_y = event.pos
-                        if 50 < pos_x < 135 and 200 < pos_y < 245:
-                            roll = die_roll()
-                            state = 'pmove'
-                            selected_id = None
+        if state == 'proll':
+            active_player = 'p'
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:  # 1 == left click
+                    pos_x, pos_y = event.pos
+                    if 50 < pos_x < 135 and 200 < pos_y < 245:
+                        roll = die_roll()
+                        state = 'pmove'
+                        selected_id = None
 
-            elif state == 'pmove':
-                curr_piece_locations, player_moves = find_possible_moves(board, roll, active_player)
-                if event.type == MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        pos_x, pos_y = event.pos
+        elif state == 'pmove':
+            curr_piece_locations, player_moves = find_possible_moves(board, roll, active_player)
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    pos_x, pos_y = event.pos
+                    # Check to ensure that the clicked location is valid
+                    if coords_to_square(pos_x, pos_y):
                         # Get the row and column of the square selected
                         row, col = coords_to_square(pos_x, pos_y)
                         if board[row][col].piece and board[row][col].piece.color == 'b':
@@ -457,60 +467,63 @@ def main():
                                             state = 'pwins'
                                         else:
                                             state = 'croll'
-            
-            elif state == 'croll':
-                active_player = 'c'
-                # Computer rolls, set state and reset selected square
-                roll = die_roll()
-                pygame.time.delay(1500)  # 1500 millisecond (1.5 second) delay for computer to roll
-                state = 'cmove'
-                selected_id = None
-            
-            elif state == 'cmove':
-                # Computer's turn to move
-                # If the computer may capture a piece, it will; otherwise, the move is random
-                curr_piece_locations, computer_moves = find_possible_moves(board, roll, active_player)
+        
+        elif state == 'croll':
+            active_player = 'c'
+            # Computer rolls, set state and reset selected square
+            roll = die_roll()
+            state = 'cmove'
+            # Add delay so it seems like the computer is 'thinking'
+            wait(1500)
+            selected_id = None
+        
+        elif state == 'cmove':
 
-                # Check for any capturable pieces
-                pygame.time.delay(2000)  # 2 second delay
-                for piece in computer_moves:
-                    # Red (computer) 'selected' one of its pieces
-                    # First, clear any other selections ONLY
-                    reset_board_attributes(board, False, True, False)
-                    selected_id = piece
-                    if curr_piece_locations[selected_id]:
-                        selected_row, selected_col = curr_piece_locations[selected_id]
-                    for row, col in computer_moves[piece]:
-                        if board[row][col].capturable:
-                            # Computer may capture a blue piece
-                            board[row][col].piece = board[selected_row][selected_col].piece
-                            board[selected_row][selected_col].piece = None
-                            # Reset all board attributes; computer's turn is over
-                            reset_board_attributes(board, True, True, True)
-                            # Red's captures go up by 1
-                            num_captures['r'] += 1
-                            # If red has captured <num_pieces> pieces, game over; otherwise, continue
-                            if num_captures['r'] == const.NUM_PIECES:
-                                state = 'cwins'
-                            else:
-                                state = 'proll'
-                    
-                # If no capture was found, perform a random move
-                if state == 'cmove':
-                    reset_board_attributes(board, False, True, False)
-                    # Randomly pick a piece id
-                    selected_id = random.choice(list(computer_moves.keys()))
-                    if curr_piece_locations[selected_id]:
-                        selected_row, selected_col = curr_piece_locations[selected_id]
-                    
-                    # Randomly pick a move from the possible moves for the piece
-                    if curr_piece_locations[selected_id]:
-                        row, col = random.choice(list(computer_moves[selected_id]))
-                    board[row][col].piece = board[selected_row][selected_col].piece
-                    board[selected_row][selected_col].piece = None
-                    # Reset all board attributes; computer's turn is over
-                    reset_board_attributes(board, True, True, True)
-                    state = 'proll'
+            # Computer's turn to move
+            # If the computer may capture a piece, it will; otherwise, the move is random
+            curr_piece_locations, computer_moves = find_possible_moves(board, roll, active_player)
+
+            # Check for any capturable pieces
+            for piece in computer_moves:
+                # Red (computer) 'selected' one of its pieces
+                # First, clear any other selections ONLY
+                reset_board_attributes(board, False, True, False)
+                selected_id = piece
+                if curr_piece_locations[selected_id]:
+                    selected_row, selected_col = curr_piece_locations[selected_id]
+                for row, col in computer_moves[piece]:
+                    if board[row][col].capturable:
+                        # Computer may capture a blue piece
+                        board[row][col].piece = board[selected_row][selected_col].piece
+                        board[selected_row][selected_col].piece = None
+                        # Reset all board attributes; computer's turn is over
+                        reset_board_attributes(board, True, True, True)
+                        # Red's captures go up by 1
+                        num_captures['r'] += 1
+                        # If red has captured <num_pieces> pieces, game over; otherwise, continue
+                        if num_captures['r'] == const.NUM_PIECES:
+                            state = 'cwins'
+                        else:
+                            wait(1500)
+                            state = 'proll'
+                
+            # If no capture was found, perform a random move
+            if state == 'cmove':
+                reset_board_attributes(board, False, True, False)
+                # Randomly pick a piece id
+                selected_id = random.choice(list(computer_moves.keys()))
+                if curr_piece_locations[selected_id]:
+                    selected_row, selected_col = curr_piece_locations[selected_id]
+                
+                # Randomly pick a move from the possible moves for the piece
+                if curr_piece_locations[selected_id]:
+                    row, col = random.choice(list(computer_moves[selected_id]))
+                board[row][col].piece = board[selected_row][selected_col].piece
+                board[selected_row][selected_col].piece = None
+                # Reset all board attributes; computer's turn is over
+                reset_board_attributes(board, True, True, True)
+                wait(1500)
+                state = 'proll'
 
         # Update game objects and data structures (i.e., Model of MVC) here
 
