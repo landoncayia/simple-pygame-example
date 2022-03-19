@@ -297,7 +297,7 @@ def coords_to_square(pos_x, pos_y):
             if x < pos_x < x+47 and y < pos_y < y+47:
                 return row, col
 
-def draw_view(board, screen, roll=None):
+def draw_view(board, screen, state, roll=None):
     """ Draws the view for the game, which includes:
         The board, the current game state and the die-rolling mechanism
         This is the method that converts the MODEL to the VIEW """
@@ -319,8 +319,8 @@ def draw_view(board, screen, roll=None):
     pygame.draw.rect(view_die, const.Color.Teal, (0, 0, 140, 300), 5)
     pygame.draw.rect(view_die, const.Color.DarkGray, (26, 50, 85, 45), 3)
     # Define font for text
-    font = pygame.font.SysFont(None, 36)
-    roll_txt = font.render('Roll', True, const.Color.Red)
+    roll_font = pygame.font.SysFont(None, 36)
+    roll_txt = roll_font.render('Roll', True, const.Color.Red)
     view_die.blit(roll_txt, (45, 60))
     # If there is a die roll, display the correct die
     if roll:
@@ -337,6 +337,29 @@ def draw_view(board, screen, roll=None):
         if roll == 6:
             view_die.blit(six_surf, (45, 160))
     screen.blit(view_die, (23, 150))
+
+    # ===== STATUS MESSAGE =====
+    view_msg = pygame.Surface((400, 50))
+    view_msg.fill(const.Color.White)
+    pygame.draw.rect(view_msg, const.Color.Teal, (0, 0, 400, 40), 5)
+    msg = ''
+    if state == 'proll':
+        msg = "Player's roll - click the 'roll' button to roll the die"
+    elif state == 'croll':
+        msg = "Computer's roll - the computer is now rolling..."
+    elif state == 'pmove':
+        msg = "Player's move - you may select a piece and make a move"
+    elif state == 'cmove':
+        msg = "Computer's move - the computer will now move..."
+    elif state == 'pwins':
+        msg = "Game over - you win!"
+    elif state == 'cwins':
+        msg = "Game over - the computer wins!"
+    # Create new font for status message
+    status_font = pygame.font.SysFont(None, 20)
+    msg_txt = status_font.render(msg, True, const.Color.Black)
+    view_msg.blit(msg_txt, (20, 15))
+    screen.blit(view_msg, (200, 15))
 
 def main():
     """ Set up the game and run the main game loop
@@ -356,9 +379,8 @@ def main():
     #   croll indicates that it is the computer's turn to roll the die
     #   pmove indicates that the player may move without capturing a piece
     #   cmove indicates that the computer may move without capturing a piece
-    #   pcptr indicates that the player may capture a computer piece
-    #   ccptr indicates that the computer may capture a player piece
-    #   gmovr indicates that the game is over; someone has won
+    #   pwins indicates that the game is over; player has won
+    #   cwins indicates that the game is over; computer has won
     # Human player always gets the first move
     state = 'proll'
     active_player = 'p'  # p or c
@@ -432,7 +454,7 @@ def main():
                                         num_captures['b'] += 1
                                         # If blue has captured <num_pieces> pieces, game over; otherwise, continue
                                         if num_captures['b'] == const.NUM_PIECES:
-                                            state = 'gmovr'
+                                            state = 'pwins'
                                         else:
                                             state = 'croll'
             
@@ -469,7 +491,7 @@ def main():
                             num_captures['r'] += 1
                             # If red has captured <num_pieces> pieces, game over; otherwise, continue
                             if num_captures['r'] == const.NUM_PIECES:
-                                state = 'gmovr'
+                                state = 'cwins'
                             else:
                                 state = 'proll'
                     
@@ -498,14 +520,11 @@ def main():
 
         # Reflect the changes to the Model onto the View for the User
         # Draw the board onto the screen
-        draw_view(board, screen, roll)
+        draw_view(board, screen, state, roll)
 
         # The flip method updates the entire screen with every change since it was last called
         pygame.display.flip()
         clock.tick(FPS)
-
-        if state == 'gmovr':
-            print("Game over!")
 
     pygame.quit()   # If the game loop is exited, quit the game and close the window.
 
