@@ -473,22 +473,22 @@ def main():
                             else:
                                 state = 'proll'
                     
-                    # If no capture was found, perform a random move
-                    if state == 'cmove':
-                        reset_board_attributes(board, False, True, False)
-                        # Randomly pick a piece id
-                        selected_id = random.choice(list(computer_moves.keys()))
-                        if curr_piece_locations[selected_id]:
-                            selected_row, selected_col = curr_piece_locations[selected_id]
-                        
-                        # Randomly pick a move from the possible moves for the piece
-                        if curr_piece_locations[selected_id]:
-                            row, col = random.choice(list(computer_moves[selected_id]))
-                        board[row][col].piece = board[selected_row][selected_col].piece
-                        board[selected_row][selected_col].piece = None
-                        # Reset all board attributes; computer's turn is over
-                        reset_board_attributes(board, True, True, True)
-                        state = 'proll'
+                # If no capture was found, perform a random move
+                if state == 'cmove':
+                    reset_board_attributes(board, False, True, False)
+                    # Randomly pick a piece id
+                    selected_id = random.choice(list(computer_moves.keys()))
+                    if curr_piece_locations[selected_id]:
+                        selected_row, selected_col = curr_piece_locations[selected_id]
+                    
+                    # Randomly pick a move from the possible moves for the piece
+                    if curr_piece_locations[selected_id]:
+                        row, col = random.choice(list(computer_moves[selected_id]))
+                    board[row][col].piece = board[selected_row][selected_col].piece
+                    board[selected_row][selected_col].piece = None
+                    # Reset all board attributes; computer's turn is over
+                    reset_board_attributes(board, True, True, True)
+                    state = 'proll'
 
         # Update game objects and data structures (i.e., Model of MVC) here
 
